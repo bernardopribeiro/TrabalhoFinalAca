@@ -10,7 +10,7 @@ echo "\n-> Opção 0 - Sair";
 echo "\nQual a opão: ";
 fscanf(STDIN, "%d\n", $number);
 while ($number != 1 && $number != 2 && $number != 0) {
-    echo "\nQual a opão: ";
+    echo "\nQual a opção(1, 2 ou 0 Sair): ";
     fscanf(STDIN, "%d\n", $number);
 }
 switch ($number) {
@@ -31,7 +31,7 @@ switch ($number) {
         fscanf(STDIN, "%d\n", $number);
 
         while ($number != 1 && $number != 2  && $number != 3 && $number != 4 && $number != 0) {
-            echo "\nQual a opão: ";
+            echo "\nQual a opção(1, 2, 3, 4 ou 0 Sair): ";
             fscanf(STDIN, "%d\n", $number);
         }
         switch ($number) {
@@ -54,6 +54,8 @@ switch ($number) {
             case "0":
                 exit();
                 break;
+            default:
+                echo "Apenas pode escolher 1, 2, 3, 4e 0.";
         }
         break;
     case "0":

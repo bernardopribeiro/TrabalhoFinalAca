@@ -3,6 +3,7 @@
 function escolherOpcaoUm()
 {
     echo "\nEscolha a unidade onde pesquisar: ";
+    //STDIN é um apontador de escrita
     $caminho = trim(fgets(STDIN));
     echo "\nEscolha a extensão a pesquisar(não inserir o ponto da extensão): ";
     $extensao = trim(fgets(STDIN));
@@ -57,22 +58,31 @@ function escolherOpcao($opcao)
     }
 }
 
+// função onde vai ao caminho desejado, pela extensão procurar, e se deseja procurar em sub-pastas ou não
 function getAllFileSystemObjectsStartingAt(string $caminho, string $pFileExtension, bool $pbRecursive = true)
 {
     $aRet = []; //col de objetos do sistema de ficheiros (FS)
+    // verifica se o caminho existe
     $bCaution0 = file_exists($caminho);
     if ($bCaution0) {
         $oFSNavigator = new DirectoryIterator($caminho);
         if ($oFSNavigator) {
             foreach ($oFSNavigator as $o) {
+                //@return bool — true if a directory, false otherwise.
                 $bIsDir = $o->isDir();
+                //Determine if current DirectoryIterator item is '.' or '..'
                 $bIsDot = $o->isDot();
+                //true if the file exists and is a regular file (not a link), false otherwise.
                 $bIsFile = $o->isFile();
+                //a string containing the file extension, or an empty string if the file has no extension.
                 $strExt = $o->getExtension();
+                // extrair a extensão do ficheiro
                 $isExtension = strcasecmp($strExt, $pFileExtension) === 0;
                 if ($bIsFile && $isExtension) {
                     $aRet[] = clone ($o);
                 }
+
+                // Se desejar pesquisar em sub-Pastas executa este IF
                 if ($pbRecursive && $bIsDir && !$bIsDot) {
                     $strSubDir = $o->getRealPath();
                     $subEntries = getAllFileSystemObjectsStartingAt($strSubDir, $pFileExtension, $pbRecursive);
@@ -131,6 +141,8 @@ function fsosToString(array $pFsos)
     return $strRet;
 } //fsosToString
 
+
+// função onde dizemos que função queremos utilizar, e qual dos criterios desejamos utilizar.
 function sortFileSystemObjects(array &$p, string $pCriterion)
 {
     usort($p, $pCriterion);
