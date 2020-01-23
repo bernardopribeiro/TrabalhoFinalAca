@@ -2,64 +2,103 @@
 
 function escolherOpcaoUm()
 {
-    echo "\nEscolha a unidade onde pesquisar: ";
-    //STDIN é um apontador de escrita
-    $caminho = trim(fgets(STDIN));
-    echo "\nEscolha a extensão a pesquisar(não inserir o ponto da extensão): ";
-    $extensao = trim(fgets(STDIN));
-    echo "\nDeseja pesquisar em sub-pastas? (true,false): ";
-    $subPastas = trim(fgets(STDIN));
+    echo "\n";
+    $caminho = readline("Escolha a unidade onde pesquisar (c:\pastaOrigem): ");
+    echo "\n";
+    $extensao = readline("Escolha a extensão a pesquisar(não inserir o ponto da extensão): ");
+    echo "\n";
+    $subPastas = strtolower(readline("Deseja pesquisar em sub-pastas? (true,false): "));
     echo "\n";
 
     if (!empty($caminho) && !empty($extensao) && !empty($subPastas)) {
-        if ($subPastas === "true") {
-            $aFsos = getAllFileSystemObjectsStartingAt($caminho, $extensao, true);
-        } else if ($subPastas === "false") {
-            $aFsos = getAllFileSystemObjectsStartingAt($caminho, $extensao, false);
+        if ($subPastas != "true" && $subPastas != "false") {
+            echo "Apenas pode escolher true ou false.";
+            escolherOpcaoUm();
+        } else {
+            if ($subPastas === "true") {
+                $aFsos = procurarFicheiro($caminho, $extensao, true);
+            } else if ($subPastas === "false") {
+                $aFsos = procurarFicheiro($caminho, $extensao, false);
+            }
+            echo fsosToString($aFsos);
         }
-        echo fsosToString($aFsos);
     } else {
-        echo "\nInsira o endereço onde deseja pesquisar. EX: C:/";
+        echo "\nTêm de preencher todos os campos.";
+        escolherOpcaoUm();
     }
 }
 
+
 function escolherOpcao($opcao)
 {
-    echo "\nEscolha o caminho a pesquisar: ";
-    $caminho = trim(fgets(STDIN));
-    echo "\nEscolha a extensão a pesquisar(não inserir o ponto da extensão): ";
-    $extensao = trim(fgets(STDIN));
-    echo "\nDeseja pesquisar em sub-pastas? (true,false): ";
-    $subPastas = trim(fgets(STDIN));
+    echo "\n";
+    $caminho = readline("Escolha a unidade onde pesquisar (c:\pastaOrigem): ");
+    echo "\n";
+    $extensao = readline("Escolha a extensão a pesquisar(não inserir o ponto da extensão): ");
+    echo "\n";
+    $subPastas = strtolower(readline("Deseja pesquisar em sub-pastas? (true,false): "));
     echo "\n";
     if (!empty($caminho) && !empty($extensao) && !empty($subPastas)) {
-        try {
-            if ($subPastas === "true") {
-                $aFsos = getAllFileSystemObjectsStartingAt($caminho, $extensao, true);
-            } else if ($subPastas === "false") {
-                $aFsos = getAllFileSystemObjectsStartingAt($caminho, $extensao, false);
+        if ($subPastas != "true" && $subPastas != "false") {
+            echo "Apenas pode escolher true ou false.";
+            escolherOpcaoUm();
+        } else {
+            try {
+                if ($subPastas === "true") {
+                    $aFsos = procurarFicheiro($caminho, $extensao, true);
+                } else if ($subPastas === "false") {
+                    $aFsos = procurarFicheiro($caminho, $extensao, false);
+                }
+                if ($opcao === 1)
+                    sortFileSystemObjects($aFsos, "byCreationDate");
+                else if ($opcao === 2)
+                    sortFileSystemObjects($aFsos, "bySizeAsc");
+                else if ($opcao === 3)
+                    sortFileSystemObjects($aFsos, "bySizeDesc");
+                else if ($opcao === 4)
+                    sortFileSystemObjects($aFsos, "byCreationDateDesc");
+                $iSlotOfTheFinalObject = count($aFsos) - 1;
+                $oBiggestSize = $aFsos[$iSlotOfTheFinalObject];
+                echo converterFrase($oBiggestSize);
+            } catch (Exception $e) {
+                exit();
             }
-            if ($opcao === 1)
-                sortFileSystemObjects($aFsos, "byCreationDate");
-            else if ($opcao === 2)
-                sortFileSystemObjects($aFsos, "bySizeAsc");
-            else if ($opcao === 3)
-                sortFileSystemObjects($aFsos, "bySizeDesc");
-            else if ($opcao === 4)
-                sortFileSystemObjects($aFsos, "byCreationDateDesc");
-            $iSlotOfTheFinalObject = count($aFsos) - 1;
-            $oBiggestSize = $aFsos[$iSlotOfTheFinalObject];
-            echo fsoToString($oBiggestSize);
-        } catch (Exception $e) {
-            exit();
         }
     } else {
-        echo "\nInsira o endereço onde deseja pesquisar. EX: C:/";
+        echo "\nTêm de preencher todos os campos.";
+        escolherOpcao($opcao);
+    }
+}
+
+function moverFicheiros()
+{
+    echo "\n";
+    $caminhoOrigem = readline("Escolha a localização do ficheiro a copiar (c:\pastaOrigem\.nomeFile.ext): ");
+    echo "\n";
+    $file = basename($caminhoOrigem);
+    $caminhoDestino = readline("Escolha onde deseja adicionar o ficheiro (c:\pastaDestino): ");
+    $caminhoDestino = $caminhoDestino . "/" . $file;
+    echo "\n";
+    rmove($caminhoOrigem, $caminhoDestino);
+}
+
+function rmove($src, $dst)
+{
+    if (file_exists($src)) {
+        if (file_exists($dst)) {
+            echo "\nFicheiro de destino já existe.\n";
+        } else {
+            mkdir(dirname($dst), 0777, true);
+            copy($src, $dst);
+            echo "\nFicheiro criado com sucesso.\n";
+        }
+    } else {
+        echo "\nFicheiro NÃO existe.\n";
     }
 }
 
 // função onde vai ao caminho desejado, pela extensão procurar, e se deseja procurar em sub-pastas ou não
-function getAllFileSystemObjectsStartingAt(string $caminho, string $pFileExtension, bool $pbRecursive = true)
+function procurarFicheiro(string $caminho, string $extensaoFicheiro, bool $procuraSubPastas = true)
 {
     $aRet = []; //col de objetos do sistema de ficheiros (FS)
     // verifica se o caminho existe
@@ -77,27 +116,27 @@ function getAllFileSystemObjectsStartingAt(string $caminho, string $pFileExtensi
                 //a string containing the file extension, or an empty string if the file has no extension.
                 $strExt = $o->getExtension();
                 // extrair a extensão do ficheiro
-                $isExtension = strcasecmp($strExt, $pFileExtension) === 0;
+                $isExtension = strcasecmp($strExt, $extensaoFicheiro) === 0;
                 if ($bIsFile && $isExtension) {
                     $aRet[] = clone ($o);
                 }
 
                 // Se desejar pesquisar em sub-Pastas executa este IF
-                if ($pbRecursive && $bIsDir && !$bIsDot) {
+                if ($procuraSubPastas && $bIsDir && !$bIsDot) {
                     $strSubDir = $o->getRealPath();
-                    $subEntries = getAllFileSystemObjectsStartingAt($strSubDir, $pFileExtension, $pbRecursive);
+                    $subEntries = procurarFicheiro($strSubDir, $extensaoFicheiro, $procuraSubPastas);
                     $aRet = array_merge($aRet, $subEntries);
                 } //if
             }
-        } //if 
-    } //if
+        }  //if 
+    }  //if
     return $aRet;
-} //getAllFileSystemObjectsStartingAt
+} //procurarFicheiro
 
 /*
  * representar enquanto frase um só objecto do tipo DirectorIterator
  */
-function fsoToString(DirectoryIterator $p)
+function converterFrase(DirectoryIterator $p)
 {
     $strRet = "";
 
@@ -128,16 +167,16 @@ function fsoToString(DirectoryIterator $p)
         return $strRet;
     } //bCaution0
     return $strRet;
-} //fsoToString
+} //converterFrase
 
 /*
  * representar enquanto frase uma coleção (array) de objetos DirectoryIterator
- * cada objeto saberá representar-se via fsoToString
+ * cada objeto saberá representar-se via converterFrase
  */
 function fsosToString(array $pFsos)
 {
     $strRet = "";
-    foreach ($pFsos as $o) $strRet .= fsoToString($o);
+    foreach ($pFsos as $o) $strRet .= converterFrase($o);
     return $strRet;
 } //fsosToString
 
